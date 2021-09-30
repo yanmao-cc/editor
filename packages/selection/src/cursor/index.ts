@@ -110,6 +110,8 @@ class Cursor {
                 }
               }
             } else {
+              let child = next.childNodes;
+              while (child) {}
             }
             break;
           }
