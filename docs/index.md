@@ -21,17 +21,38 @@ footer: Open-source MIT Licensed | Copyright © 2020<br />Powered by [dumi](http
 ## Hello editor!
 
 ```tsx
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import CustomeSelection from '@aomao/selection';
 
 export default () => {
   const customeSelection = useRef<CustomeSelection | null>(null);
   const container = useRef<HTMLElement | null>(null);
-
+  const [boxRect, setBoxRect] = useState({});
   useEffect(() => {
     customeSelection.current = new CustomeSelection(container.current);
+    const boxRect = container.current?.getBoundingClientRect();
+    setBoxRect({
+      top: boxRect?.top,
+      left: boxRect?.left,
+      width: boxRect?.width,
+      height: boxRect?.height,
+    });
   }, []);
 
-  return <div ref={container}>abc123efg</div>;
+  return (
+    <>
+      <div>Box: {JSON.stringify(boxRect)}</div>
+      <div
+        ref={container}
+        style={{
+          width: '100px',
+          wordWrap: 'break-word',
+          whiteSpace: 'pre-wrap',
+        }}
+      >
+        abcdefghijklm123456
+      </div>
+    </>
+  );
 };
 ```

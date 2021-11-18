@@ -84,7 +84,7 @@ export default class {
         return;
       }
     });
-    if (textNode === null) return rect.top;
+    if (textNode === null) return;
     const range = document.createRange();
     range.setStart(textNode, 0);
     range.setEnd(textNode, 0);
@@ -99,7 +99,11 @@ export default class {
       if (value <= (rowIndex + 1) * lineHeight) break;
     }
     // 鼠标所在的top
-    return rowIndex * lineHeight + rect.top;
+    return {
+      top: rowIndex * lineHeight + rect.top,
+      row: rowIndex,
+      lineHeight,
+    };
   }
 
   getOffset(target: Node, top: number, left: number) {
@@ -114,7 +118,8 @@ export default class {
     // 鼠标所在位置到文本节点开头的宽度
     const width = left + 1 - rect.left;
     // 鼠标所在的top
-    top = this.normalMouseTop(element, left);
+    const info = this.normalMouseTop(element, top);
+    if (!info) return null;
     // 索引
     let offset = 0;
     // 累计计算的宽度
@@ -125,7 +130,12 @@ export default class {
     while (child && !offsetNode) {
       if (child.nodeType === Node.TEXT_NODE) {
         const length = child.textContent?.length || 0;
-        offset = this.getTextOffset(child as Text, top, left, length).offset;
+        offset = this.getTextOffset(
+          child as Text,
+          info.top,
+          left,
+          length,
+        ).offset;
       }
       child = child.nextSibling;
     }
@@ -183,11 +193,17 @@ export default class {
         offset: 0,
       };
     }
-    // 索取光标位置
+    // 获取光标位置
     const rect = range.getBoundingClientRect();
     // 如果光标位置与小于鼠标点击位置的top, 就取后半段
+    // 场景1：
+    // abcdefg
+    // 123
+    //
     if (rect.top < top) {
       return this.getTextOffset(textNode, top, left, length, offset, end);
+    } else if (rect.top > top) {
+      return this.getTextOffset(textNode, top, left, length, start, offset);
     } else {
       // 如果光标位置等于 鼠标位置就返回 offset
       if (rect.left === left)
@@ -229,7 +245,7 @@ export default class {
             node: textNode,
             offset: length,
           };
-        // 光标位置 left 小于 鼠标位置left，取前半段
+        // 光标位置 left 小于 鼠标位置left，取后半段
         return this.getTextOffset(textNode, top, left, length, offset, end);
       }
     }

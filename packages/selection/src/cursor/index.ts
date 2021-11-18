@@ -113,6 +113,7 @@ class Cursor {
               let child = next.childNodes;
               while (child) {}
             }
+            next = next.nextSibling;
             break;
           }
           // 没有换行
