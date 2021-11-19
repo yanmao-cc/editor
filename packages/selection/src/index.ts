@@ -176,23 +176,35 @@ export default class {
     length: number,
     start: number = 0,
     end: number = length,
-  ): { node: Text; offset: number } {
+  ): { node: Text; offset: number; atEnd: boolean } {
     const range = document.createRange();
-    // 获取字符长度的一半
-    const offset = Math.floor((end - start) / 2) + start;
-    try {
+    const setRange = (offset: number) => {
       // 让 range 选中这个 offset
       range.setStart(textNode, offset),
         range.setEnd(
           textNode,
           Math.max(Math.min(offset, (textNode.textContent || '').length), 0),
         );
+    };
+    // 获取字符长度的一半
+    const step = Math.floor((end - start) / 2);
+    if (step === 0) {
+      setRange(start);
+      // 获取光标位置
+      const rect = range.getBoundingClientRect();
+      return { node: textNode, offset: start, atEnd: rect.top > top };
+    }
+    const offset = step + start;
+    try {
+      setRange(offset);
     } catch (error) {
       return {
         node: textNode,
         offset: 0,
+        atEnd: true,
       };
     }
+
     // 获取光标位置
     const rect = range.getBoundingClientRect();
     // 如果光标位置与小于鼠标点击位置的top, 就取后半段
@@ -210,6 +222,7 @@ export default class {
         return {
           node: textNode,
           offset,
+          atEnd: true,
         };
       // 光标位置 left 大于 鼠标位置left，取前半段
       if (rect.left > left) {
@@ -221,12 +234,14 @@ export default class {
           return {
             node: textNode,
             offset,
+            atEnd: true,
           };
         // 第二个字符还没找到就算作第一个了
         if (offset - 1 === 0)
           return {
             node: textNode,
             offset: 0,
+            atEnd: true,
           };
         return this.getTextOffset(textNode, top, left, length, start, offset);
       } else {
@@ -238,12 +253,14 @@ export default class {
           return {
             node: textNode,
             offset,
+            atEnd: true,
           };
         // 倒数第二个字符还没找到就算作最后一个了
         if (offset + 1 === length)
           return {
             node: textNode,
             offset: length,
+            atEnd: true,
           };
         // 光标位置 left 小于 鼠标位置left，取后半段
         return this.getTextOffset(textNode, top, left, length, offset, end);
